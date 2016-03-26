@@ -2,14 +2,14 @@
 
 START=99
 
-# sed -i 's/Version = 0.4/Version = 5/g' /tmp/pcap/Config.conf-bak
+PROGRAM="/usr/sbin/Pcap_DNSProxy"
 
-PROGRAM=/usr/sbin/Pcap_DNSProxy
-CONF_FIL="/etc/pcap_dnsproxy/config"
-CONF_FIL_DIR="/etc/pcap_dnsproxy/Config.ini"
-CONF_FIL_USER="/etc/pcap_dnsproxy/user/Config.ini"
+O_CONF_FIL="/etc/pcap_dnsproxy/config"
+CONF_FIL="/etc/pcap_dnsproxy/Config.conf"
+
 CONF_DIR="/etc/pcap_dnsproxy"
 CONF_DIR_USER="/etc/pcap_dnsproxy/user"
+
 TMP_DIR="/tmp/pcap_dnsproxy"
 TMP_FIL="/tmp/pcap_dnsproxy/config-tmp.conf"
 
@@ -51,13 +51,13 @@ general_set() {
 		-e "/Listen Protocol/c Listen Protocol = $listen_protocol" \
 		-e "/Pcap Reading Timeout/c Pcap Reading Timeout = $read_timeout" $TMP_FIL
 
-	sed -i -e "/IPv4 DNS Address/c IPv4 DNS Address = $gen_ipv4_req" \
-		-e "/IPv4 Alternate DNS Address/c IPv4 Alternate DNS Address = $alt_ipv4_req" \
+	sed -i -e "/IPv4 DNS Address = 8.8.4.4:53/c IPv4 DNS Address = $gen_ipv4_req" \
+		-e "/IPv4 Alternate DNS Address = 8.8.8.8:53/c IPv4 Alternate DNS Address = $alt_ipv4_req" \
 		-e "/IPv4 Local DNS Address/c IPv4 Local DNS Address = $gen_ipv4_lo_req" $TMP_FIL 
 
 	sed -i -e "/IPv4 Local Alternate DNS Address/c IPv4 Local Alternate DNS Address = $alt_ipv4_lo_req" \
-		-e "/IPv6 DNS Address/c IPv6 DNS Address = $gen_ipv6_req" \
-		-e "/IPv6 Alternate DNS Address/c IPv6 Alternate DNS Address = $alt_ipv6_req" $TMP_FIL
+		-e "/IPv6 DNS Address = ipv6/c IPv6 DNS Address = $gen_ipv6_req" \
+		-e "/IPv6 Alternate DNS Address = ipv6/c IPv6 Alternate DNS Address = $alt_ipv6_req" $TMP_FIL
 
 	GEN_REQ_SET=$gen_req_set
 	LOCAL_REQ_SET=$local_req_set
@@ -81,14 +81,13 @@ general_req() {
 	config_get def_ttl $1 def_ttl
 
 	echo "Loading General DNS Request Settings... "
-	sed -i -e "/Fixable_Protocol/c Protocol = $dns_protocol" \
+	sed -i -e "/Protocol = req_Protocol/c Protocol = $dns_protocol" \
 		-e "/Direct Request/c Direct Request = $dir_req" \
 		-e "/Cache Type/c Cache Type = $cache_type" \
 		-e "/Cache Parameter/c Cache Parameter = $cache_par" \
 		-e "/Default TTL/c Default TTL = $def_ttl" $TMP_FIL
 
 	echo '	General Settings loaded. '
-	echo ''
 	
 }
 
@@ -132,8 +131,6 @@ local_req() {
 	else echo '	Request Partition(Local Prefer) Disable. '
 	fi
 	
-	echo ''
-	
 }
 
 adv_switches() {
@@ -153,7 +150,6 @@ adv_switches() {
 		-e "/Multi Request Times/c Multi Request Times = $mul_req" \
 		-e "/Compression Pointer Mutation/c Compression Pointer Mutation = $compress" $TMP_FIL
 	echo '	Advanced Switches loaded. '
-	echo ''
 	
 }
 
@@ -251,8 +247,6 @@ proxy() {
 		}
 		else echo '	Proxy Disabled. '
 	fi
-	
-	echo ''
 
 }
 
@@ -299,6 +293,7 @@ advanced_set() {
 	sed -i -e "/Additional Path/c Additional Path = $addit_path" $TMP_FIL
 	sed -i -e "/IPFilter File Name/c IPFilter File Name = $ipfil" $TMP_FIL
 	sed -i -e "/Pcap Devices Blacklist/c Pcap Devices Blacklist = $dev_black" $TMP_FIL
+	sed -i -e "/Buffer Queue Limits/c Buffer Queue Limits = $queue_lim" $TMP_FIL
 	sed -i -e "/Queue Limits Reset Time/c Queue Limits Reset Time = $queue_lim_re" $TMP_FIL
 	sed -i -e "/Receive Waiting/c Receive Waiting = $recv_wait" $TMP_FIL
 	
@@ -316,6 +311,7 @@ advanced_set() {
 		}
 	else echo '	DNSCurve Disable. '
 	fi
+
 }
 
 dispcap_capture() {
@@ -329,14 +325,7 @@ dispcap_capture() {
 		-e "/Hosts File Name/c Hosts File Name = $hosts_fil" $TMP_FIL
 	echo '	Dispcap Capture Loaded. '
 
-
 }
-
-# progam_status() {
-	# [ (ps|grep ${PROG}|grep -v grep|wc -l) == 1 ] && P_STATUS=1 || P_STATUS=0
-	
-
-# }
 
 pcap_header() {
 	local enabled
@@ -350,51 +339,85 @@ pcap_header() {
 	ENABLE=$enabled
 	PCAP_CAP=$pcap_cap
 	CONF_FIL_EN=$conf_fil
+
 }
 
 start() {
 	mkdir -p $TMP_DIR
-	cp -f $CONF_FIL $TMP_FIL
-	rm -f $CONF_FIL_DIR
-	ln -s $TMP_FIL $CONF_FIL_DIR
-	ln -s $TMP_FIL /etc/pcap_dnsproxy/Config.conf
+	cp  $O_CONF_FIL $TMP_FIL
+	echo 'Checking Configuration... '
+
+	if [ -e "$CONF_FIL" ] 
+	then
+		echo "Config File Link exist. Rebuilting... "
+		rm -f $CONF_FIL
+		ln -s $TMP_FIL $CONF_FIL
+		echo "Config File Link Rebuilted. "
+	else 
+		ln -s $TMP_FIL $CONF_FIL
+		echo "Config File Link Rebuilted. "
+	fi
 
 	config_load pcap_dnsproxy
 	config_foreach pcap_header
-	
+
 	if [ $CONF_FIL_EN == 1 ]
-	then
-	service_start $PROGRAM -c $CONF_DIR_USER --disable-daemon
-	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running, PID $(pidof ${PROGRAM##*/}). " || echo "Pcap_DNSProxy NOT Running. "
-	else {
-		if [ $ENABLE == 1 -a $PCAP_CAP == 0 ] 
+		then
+		service_start $PROGRAM -c $CONF_DIR_USER --disable-daemon
+		[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy NOT Running. "
+		else if [ $ENABLE == 1 -a ! $PCAP_CAP  ] 
 			then {
-				echo 'Pcap_DNSProxy Starting...'
-				
 				# echo "GEN_REQ_SET:$GEN_REQ_SET LOCAL_REQ_SET:$LOCAL_REQ_SET"
 				# echo "SWI_SET:$SWI_SET PROXY_SET:$PROXY_SET ADV_SET:$ADV_SET"
 				
 				config_foreach general_set
-				[ $GEN_REQ_SET == 1 ] && config_foreach general_req
-				[ $LOCAL_REQ_SET == 1 ] && config_foreach local_req
-				[ $SWI_SET == 1 ] && config_foreach adv_switches
-				[ $PROXY_SET == 1 ] && config_foreach proxy
-				[ $ADV_SET == 1 ] && config_foreach advanced_set
+				[ $GEN_REQ_SET == 1 ] && config_foreach general_req 
+				[ $LOCAL_REQ_SET == 1 ] && config_foreach local_req 
+				[ $SWI_SET == 1 ] && config_foreach adv_switches 
+				[ $PROXY_SET == 1 ] && config_foreach proxy 
+				[ $ADV_SET == 1 ] && config_foreach advanced_set 
 				
-#				service_start $PROGRAM -c $CONF_DIR --disable-daemon
-#				[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy is running, PID is $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy is NOT running"
+				echo "Config Loading finished. "
+				echo 'Pcap_DNSProxy Starting...'
+				service_start $PROGRAM -c $CONF_DIR 
+				[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy NOT Running. "
 				}
 			else if [ $ENABLE == 1 -a $PCAP_CAP == 1 ]
-				then
-					config_foreach dispcap_capture
-					echo 'Pcap_DNSProxy Pcap Capture Disabled. Limited.'
-				else if [ $ENABLE == 0 -a $PCAP_CAP == 0 ]
 					then
-						echo 'Pcap_DNSProxy Pcap Disabled.'
-				fi
+						config_foreach dispcap_capture
+						echo 'Pcap_DNSProxy Pcap Capture Disabled. Limited.'
+						service_start $PROGRAM -c $CONF_DIR --disable-daemon
+						[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy NOT Running. "
+					else echo 'Pcap_DNSProxy Pcap Disabled.'
 			fi
 		fi
-	}
 	fi
+	echo ' '
+}
+
+stop() {
+	service_stop $PROGRAM
+	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 0 ] && echo "Pcap_DNSProxy Stoped. " || echo "Pcap_DNSProxy NOT Stoped. "
+}
+
+restart() {
+	stop
+#	killall $PROGRAM
+	sleep 3
+	echo ''
+	start
 
 }
+
+status() {
+
+	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy is running, PID is $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy is NOT running"
+
+}
+
+libver() {
+
+	$PROGRAM --lib-version
+
+}
+
