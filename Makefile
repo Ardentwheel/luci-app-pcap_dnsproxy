@@ -32,16 +32,30 @@ endef
 
 define Package/luci-pcap_dnsproxy-app/install
 	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/etc/config/pcap_dnsproxy $(1)/etc/config/pcap_dnsproxy
+	
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/init.d/pcap_dnsproxy.sh $(1)/etc/init.d/pcap_dnsproxy.sh
+	
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/config $(1)/etc/pcap_dnsproxy/config
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/Hosts.conf $(1)/etc/pcap_dnsproxy/Hosts.conf
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/IPFilter.conf $(1)/etc/pcap_dnsproxy/IPFilter.conf
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/Routing.txt $(1)/etc/pcap_dnsproxy/Routing.txt
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/WhiteList.txt $(1)/etc/pcap_dnsproxy/WhiteList.txt
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/WhiteList_User.txt $(1)/etc/pcap_dnsproxy/WhiteList_User.txt
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/user/Config.conf $(1)/etc/pcap_dnsproxy/user/Config.conf
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/user/Hosts.conf $(1)/etc/pcap_dnsproxy/user/Hosts.conf
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/user/IPFilter.conf $(1)/etc/pcap_dnsproxy/user/IPFilter.conf
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/user/Routing.txt $(1)/etc/pcap_dnsproxy/user/Routing.txt
+	$(INSTALL_DATA) ./files/pcap_dnsproxy/user/WhiteList.txt $(1)/etc/pcap_dnsproxy/user/WhiteList.txt
+	
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
-
-	$(INSTALL_CONF) ./files/etc/config/pcap_dnsproxy $(1)/etc/config/pcap_dnsproxy
-	$(INSTALL_CONF) ./files/init.d/pcap_dnsproxy.sh $(1)/etc/init.d/pcap_dnsproxy.sh
-	$(INSTALL_CONF) ./files/pcap_dnsproxy $(1)/etc/pcap_dnsproxy
 	$(INSTALL_DATA) ./files/usr/controller/pcap_dnsproxy.lua $(1)/usr/lib/lua/luci/controller/pcap_dnsproxy.lua
+	
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi
 	$(INSTALL_DATA) ./files/usr/model/pcap_dnsproxy.lua $(1)/usr/lib/lua/luci/model/cbi/pcap_dnsproxy.lua
+
 	endef
 
 
