@@ -363,7 +363,7 @@ start() {
 
 	if [ $CONF_FIL_EN == 1 ]
 		then
-		service_start $PROGRAM -c $CONF_DIR_USER --disable-daemon
+		service_start $PROGRAM -c $CONF_DIR_USER 
 		[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy NOT Running. "
 		else if [ $ENABLE == 1 -a ! $PCAP_CAP  ] 
 			then {
@@ -386,7 +386,7 @@ start() {
 					then
 						config_foreach dispcap_capture
 						echo 'Pcap_DNSProxy Pcap Capture Disabled. Limited.'
-						service_start $PROGRAM -c $CONF_DIR --disable-daemon
+						service_start $PROGRAM -c $CONF_DIR 
 						[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy NOT Running. "
 					else echo 'Pcap_DNSProxy Pcap Disabled.'
 			fi

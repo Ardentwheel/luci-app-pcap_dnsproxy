@@ -35,12 +35,8 @@ s:tab("config_file",  translate("Config File"))
 ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    
 
 
-switch = s:taboption("general", Flag, "enabled", translate("Enable"))
+switch = s:taboption("general", Flag, "enabled", translate("Enable"), translate("<a href=\"https://github.com/chengr28/Pcap_DNSProxy/tree/Release/Documents\">Documents</a>"))
 switch.rmempty = false
-
-pcap_cap = s:taboption("general", Flag, "pcap_cap", translate("Pcap Capture"))
-pcap_cap.default = "1"
-pcap_cap.rmempty = false
 
 opera_mode = s:taboption("general", ListValue, "opera_mode", translate("Operation Mode"))
 opera_mode:value("Server")
@@ -71,7 +67,6 @@ gen_ipv4_req:value("8.8.8.8:53")
 gen_ipv4_req:value("8.8.4.4:53")
 gen_ipv4_req.default = "8.8.4.4:53"
 
-
 alt_ipv4_req = s:taboption("general", Value, "alt_ipv4_req", translate("IPv4 DNS Address Alternate"))
 alt_ipv4_req:value("8.8.8.8:53|208.67.220.220:443|208.67.222.222:5353")
 alt_ipv4_req.default = "8.8.8.8:53|208.67.220.220:443|208.67.222.222:5353"
@@ -81,11 +76,11 @@ gen_ipv4_lo_req:value("114.114.114.114:53")
 gen_ipv4_lo_req:value("114.114.115.115:53")
 gen_ipv4_lo_req:value("223.5.5.5:53")
 gen_ipv4_lo_req:value("223.6.6.6:53")
-gen_ipv4_lo_req.default = "114.114.115.115"
+gen_ipv4_lo_req.default = "114.114.115.115:53"
 
 alt_ipv4_lo_req = s:taboption("general", Value, "alt_ipv4_lo_req", translate("IPv4 DNS Address Alternate"))
-alt_ipv4_lo_req:value("114.114.114.114:53|223.5.5.5:53|202.96.128.84:53")
-alt_ipv4_lo_req.default = "114.114.114.114:53|223.5.5.5:53|202.96.128.84:53"
+alt_ipv4_lo_req:value("114.114.114.114:53|223.5.5.5:53|202.96.128.86:53")
+alt_ipv4_lo_req.default = "114.114.114.114:53|223.5.5.5:53|202.96.128.86:53"
 
 gen_ipv6_req = s:taboption("general", Value, "gen_ipv6_req", translate("IPv6 DNS Address"))
 gen_ipv6_req:value("[2001:4860:4860::8844]:53")
@@ -158,6 +153,7 @@ cache_par:depends("gen_req_set", "1")
 
 def_ttl = s:taboption("gen_dns", Value, "def_ttl", translate("Default TTL")
 	, translate("Default Set is 900s."))
+def_ttl.default = "900"
 def_ttl.datatype = "ufloat"
 def_ttl:depends("gen_req_set", "1")
 
@@ -181,7 +177,7 @@ local_protocol:value("IPv4 + IPv6 + TCP")
 local_protocol:depends("local_req_set", "1")
 
 req_partition = s:taboption("local_req", Flag, "req_partition", translate("Request Partition(Local Prefer)"),
-	translate("IPv4 support needs Liunx version newer than 3.7. IPv6 TFO support needs Liunx version newer than 3.16."))
+	translate(""))
 req_partition.default = "0"
 req_partition:depends("local_req_set", "1")
 
@@ -248,23 +244,23 @@ compress:depends("swi_set", "1")
 ---------    ---------    ---------    ---------    ---------    ---------   
 
 proxy = s:taboption("proxy_set", Flag, "proxy", translate("Proxy"),
-	translate("Options for proxy users"))
+	translate(""))
 proxy.default = "0"
 proxy:depends ("proxy_set", "1")
 
 socks_proxy = s:taboption("proxy_set", Flag, "socks_proxy", translate("SOCKS Proxy"),
-	translate("Options for proxy users"))
+	translate(""))
 socks_proxy.default = "0"
 socks_proxy:depends ("proxy_set", "1")
 
 
 socks_proxy_ol = s:taboption("proxy_set", Flag, "socks_proxy_ol", translate("SOCKS Proxy Only"),
-	translate("Options for proxy_set users"))
+	translate(""))
 socks_proxy_ol:depends ("socks_proxy", "1")
 
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 socks_permisson = s:taboption("proxy_set", Flag, "socks_permisson", translate("SOCKS Permisson"),
-	translate("Options for proxy_set users"))
+	translate(""))
 socks_permisson:depends ("socks_proxy", "1")
 
 socks_user = s:taboption("proxy_set", Value, "socks_user", translate("User"))
@@ -323,17 +319,17 @@ socks_protocol:depends ("socks_proxy", "1")
 ------------   ------------   ------------   ------------   ------------   ------------   ------------   ------------   ------------   ------------   
 
 http_proxy = s:taboption("proxy_set", Flag, "http_proxy", translate("HTTP Proxy"),
-	translate("Options for proxy_set users"))
+	translate(""))
 http_proxy.default = "0"
 http_proxy:depends ("proxy_set", "1")
 
 http_proxy_ol = s:taboption("proxy_set", Flag, "http_proxy_ol", translate("HTTP Proxy Only"),
-	translate("Options for proxy_set users"))
+	translate(""))
 http_proxy_ol:depends ("http_proxy", "1")
 
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 http_permisson = s:taboption("proxy_set", Flag, "http_permisson", translate("http Permisson"),
-	translate("Options for proxy_set users"))
+	translate(""))
 http_permisson:depends ("http_proxy", "1")
 
 http_user = s:taboption("proxy_set", Value, "http_user", translate("User"))
@@ -375,6 +371,10 @@ http_protocol:depends ("http_proxy", "1")
 
 -- Advanced Settings
 ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    
+
+pcap_cap = s:taboption("advanced", Flag, "pcap_cap", translate("Disable cap Capture"))
+pcap_cap.default = "0"
+pcap_cap:depends ("adv_set", "1")
 
 server_name = s:taboption("advanced", Value, "server_name", translate("Localhost Server Name"))
 server_name.default = "pcap-dnsproxy.localhost.server"
@@ -425,10 +425,18 @@ queue_lim:depends ("adv_set", "1")
 
 queue_lim_re = s:taboption("advanced", Value, "queue_lim_re", translate("Queue Limits Reset Time"),
 	translate(""))
+queue_lim_re:value("0")
+queue_lim_re:value("300")
+queue_lim_re:value("600")
+queue_lim_re.default = "0"
 queue_lim_re:depends ("adv_set", "1")
 
 recv_wait = s:taboption("advanced", Value, "recv_wait", translate("Receive Waiting"),
 	translate(""))
+recv_wait:value("0")
+recv_wait:value("200")
+recv_wait:value("300")
+recv_wait.default = "0"
 recv_wait:depends ("adv_set", "1")
 
 
@@ -520,24 +528,22 @@ config_file_p:depends ("conf_fil", "1")
 
 
 function config_file_p.cfgvalue(self, section)
-	return nixio.fs.readfile("/etc/pcap_dnsproxy/user/Config.ini")
+	return nixio.fs.readfile("/etc/pcap_dnsproxy/user/Config.conf")
 end
 
 function config_file_p.write(self, section, value)
 	value = value:gsub("\r\n?", "\n")
-	nixio.fs.writefile("//etc/pcap_dnsproxy/user/Config.ini", value)
+	nixio.fs.writefile("//etc/pcap_dnsproxy/user/Config.conf", value)
 end
 
 ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    
 
---[[
 
 local apply = luci.http.formvalue("cbi.apply")
 if apply then
 	io.popen("/etc/init.d/pcap_dnsproxy restart")
 end
 
-]]--
 
 
 
