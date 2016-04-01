@@ -35,7 +35,7 @@ s:tab("config_file",  translate("Config File"))
 ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    
 
 
-switch = s:taboption("general", Flag, "enabled", translate("Enable"), translate("<a href=\"https://github.com/chengr28/Pcap_DNSProxy/tree/Release/Documents\">Documents</a>"))
+switch = s:taboption("general", Flag, "enabled", translate("Enable"), translate("<a href=\"https://github.com/chengr28/Pcap_DNSProxy/tree/Release/Documents\" target=\"_black\">Documents</a>"))
 switch.rmempty = false
 
 opera_mode = s:taboption("general", ListValue, "opera_mode", translate("Operation Mode"))
@@ -62,33 +62,44 @@ listen_protocol:value("IPv6 + TCP")
 read_timeout = s:taboption("general", Value, "read_timeout", translate("Pcap Reading Timeout"))
 read_timeout.default = "200"
 
-gen_ipv4_req = s:taboption("general", Value, "gen_ipv4_req", translate("IPv4 DNS Address"))
+gen_ipv4_req = s:taboption("general", Value, "gen_ipv4_req", translate("IPv4 DNS Address"), translate("Only one address available. "))
 gen_ipv4_req:value("8.8.8.8:53")
 gen_ipv4_req:value("8.8.4.4:53")
 gen_ipv4_req.default = "8.8.4.4:53"
 
-alt_ipv4_req = s:taboption("general", Value, "alt_ipv4_req", translate("IPv4 DNS Address Alternate"))
-alt_ipv4_req:value("8.8.8.8:53|208.67.220.220:443|208.67.222.222:5353")
-alt_ipv4_req.default = "8.8.8.8:53|208.67.220.220:443|208.67.222.222:5353"
+alt_ipv4_req = s:taboption("general", Value, "alt_ipv4_req", translate("IPv4 DNS Address Alternate"), translate("Available multi address. "))
+alt_ipv4_req:value("208.67.222.222:5353")
+alt_ipv4_req.default = "208.67.222.222:5353"
 
-gen_ipv4_lo_req = s:taboption("general", Value, "gen_ipv4_lo_req", translate("IPv4 DNS Address"))
+gen_ipv4_lo_req = s:taboption("general", Value, "gen_ipv4_lo_req", translate("IPv4 Local DNS Address"), translate("Only one address available. "))
 gen_ipv4_lo_req:value("114.114.114.114:53")
 gen_ipv4_lo_req:value("114.114.115.115:53")
 gen_ipv4_lo_req:value("223.5.5.5:53")
 gen_ipv4_lo_req:value("223.6.6.6:53")
 gen_ipv4_lo_req.default = "114.114.115.115:53"
 
-alt_ipv4_lo_req = s:taboption("general", Value, "alt_ipv4_lo_req", translate("IPv4 DNS Address Alternate"))
-alt_ipv4_lo_req:value("114.114.114.114:53|223.5.5.5:53|202.96.128.86:53")
-alt_ipv4_lo_req.default = "114.114.114.114:53|223.5.5.5:53|202.96.128.86:53"
+alt_ipv4_lo_req = s:taboption("general", Value, "alt_ipv4_lo_req", translate("IPv4 Local DNS Address Alternate"), translate("Only one address available. "))
+alt_ipv4_lo_req:value("114.114.114.114:53")
+alt_ipv4_lo_req:value("114.114.115.115:53")
+alt_ipv4_lo_req:value("223.5.5.5:53")
+alt_ipv4_lo_req:value("223.6.6.6:53")
+alt_ipv4_lo_req.default = "223.5.5.5:53"
 
-gen_ipv6_req = s:taboption("general", Value, "gen_ipv6_req", translate("IPv6 DNS Address"))
+gen_ipv6_req = s:taboption("general", Value, "gen_ipv6_req", translate("IPv6 DNS Address"), translate("Only one address available. "))
 gen_ipv6_req:value("[2001:4860:4860::8844]:53")
 gen_ipv6_req.default = "[2001:4860:4860::8844]:53"
 
-alt_ipv6_req = s:taboption("general", Value, "alt_ipv6_req", translate("IPv6 DNS Address Alternate"))
-alt_ipv6_req:value("[2001:4860:4860::8888]:53|[2620:0:CCD::2]:443|[2620:0:CCC::2]:5353")
-alt_ipv6_req.default = "[2001:4860:4860::8888]:53|[2620:0:CCD::2]:443|[2620:0:CCC::2]:5353"
+alt_ipv6_req = s:taboption("general", Value, "alt_ipv6_req", translate("IPv6 DNS Address Alternate"), translate("Available multi address. "))
+alt_ipv6_req:value("[2620:0:CCC::2]:5353")
+alt_ipv6_req.default = "[2620:0:CCC::2]:5353"
+
+gen_ipv6_lo_req = s:taboption("general", Value, "gen_ipv6_lo_req", translate("IPv6 Local DNS Address"), translate("Only one address available. "))
+gen_ipv6_lo_req:value("")
+gen_ipv6_lo_req.default = ""
+
+alt_ipv6_lo_req = s:taboption("general", Value, "alt_ipv6_lo_req", translate("IPv6 Local DNS Address Alternate"), translate("Only one address available. "))
+alt_ipv6_lo_req:value("")
+alt_ipv6_lo_req.default = ""
 
 gen_req_set = s:taboption("general", Flag, "gen_req_set", translate("Open General DNS Request Settings"))
 gen_req_set.default = "0"
@@ -243,7 +254,7 @@ compress:depends("swi_set", "1")
 -- Proxy Settings
 ---------    ---------    ---------    ---------    ---------    ---------   
 
-proxy = s:taboption("proxy_set", Flag, "proxy", translate("Proxy"),
+proxy = s:taboption("proxy_set", Flag, "proxy", translate("Enable Proxy"),
 	translate(""))
 proxy.default = "0"
 proxy:depends ("proxy_set", "1")
@@ -480,7 +491,7 @@ dnscurve_ipv4_alt:value("113.20.8.17:443")
 dnscurve_ipv4_alt.default = "113.20.8.17:443"
 dnscurve_ipv4_alt:depends ("dnscurve","1")
 
-dnscurve_ipv6 = s:taboption("advanced", Value, "dnscurve_ipv6", translate("<abbr title=\"Internet protocol Version 6\">IPv6</abbr>- Address")
+dnscurve_ipv6 = s:taboption("advanced", Value, "dnscurve_ipv6", translate("<abbr title=\"Internet protocol Version 6\">IPv6</abbr>-Address")
 	, translate("[2620:0:CCC::2]:443"))
 dnscurve_ipv6:value("[2620:0:CCC::2]:443")
 dnscurve_ipv6.default = "[2620:0:CCC::2]:443"
@@ -541,7 +552,7 @@ end
 
 local apply = luci.http.formvalue("cbi.apply")
 if apply then
-	io.popen("/etc/init.d/pcap_dnsproxy restart")
+	io.popen("/etc/init.d/pcap_dnsproxy.sh restart")
 end
 
 

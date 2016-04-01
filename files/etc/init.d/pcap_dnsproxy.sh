@@ -1,17 +1,23 @@
 #!/bin/sh /etc/rc.common
 
-START=99
+START=95
+
+EXTRA_COMMANDS="status libver"
+EXTRA_HELP=<<EOF
+	Available Commands: 
+		status
+		libver
+EOF
 
 PROGRAM="/usr/sbin/Pcap_DNSProxy"
-
 O_CONF_FIL="/etc/pcap_dnsproxy/config"
 CONF_FIL="/etc/pcap_dnsproxy/Config.conf"
 
 CONF_DIR="/etc/pcap_dnsproxy"
 CONF_DIR_USER="/etc/pcap_dnsproxy/user"
 
-TMP_DIR="/tmp/pcap_dnsproxy"
-TMP_FIL="/tmp/pcap_dnsproxy/config-tmp.conf"
+TMP_DIR="/tmp/etc/pcap_dnsproxy"
+TMP_FIL="$TMP_DIR/config-tmp.conf"
 
 general_set() {
 	local opera_mode
@@ -29,6 +35,10 @@ general_set() {
 	local swi_set
 	local adv_set
 	local proxy_set
+	local gen_ipv6_lo_req
+	local alt_ipv6_lo_req
+	local dns_protocol
+	
 
 	config_get opera_mode $1 opera_mode
 	config_get server_port $1 server_port
@@ -40,11 +50,15 @@ general_set() {
 	config_get alt_ipv4_lo_req $1 alt_ipv4_lo_req
 	config_get gen_ipv6_req $1 gen_ipv6_req
 	config_get alt_ipv6_req $1 alt_ipv6_req
+	config_get gen_ipv6_lo_req $1 gen_ipv6_lo_req
+	config_get alt_ipv6_lo_req $1 alt_ipv6_lo_req
 	config_get gen_req_set $1 gen_req_set
 	config_get local_req_set $1 local_req_set
 	config_get swi_set $1 swi_set
 	config_get proxy_set $1 proxy_set
 	config_get adv_set $1 adv_set
+	
+	config_get dns_protocol $1 dns_protocol
 
 	sed -i -e "/Operation Mode/c Operation Mode = $opera_mode" \
 		-e "/Listen Port/c Listen Port = $server_port" \
@@ -57,13 +71,17 @@ general_set() {
 
 	sed -i -e "/IPv4 Local Alternate DNS Address/c IPv4 Local Alternate DNS Address = $alt_ipv4_lo_req" \
 		-e "/IPv6 DNS Address = ipv6/c IPv6 DNS Address = $gen_ipv6_req" \
-		-e "/IPv6 Alternate DNS Address = ipv6/c IPv6 Alternate DNS Address = $alt_ipv6_req" $TMP_FIL
+		-e "/IPv6 Alternate DNS Address = ipv6/c IPv6 Alternate DNS Address = $alt_ipv6_req" \
+		-e "/IPv6 Local DNS Address = ipv6/c IPv6 Local DNS Address = $gen_ipv6_lo_req" \
+		-e "/IPv6 Local Alternate DNS Address = ipv6/c IPv6 Local Alternate DNS Address = $alt_ipv6_lo_req" $TMP_FIL
 
 	GEN_REQ_SET=$gen_req_set
 	LOCAL_REQ_SET=$local_req_set
 	SWI_SET=$swi_set
 	PROXY_SET=$proxy_set
 	ADV_SET=$adv_set
+	
+	DNS_P=$dns_protocol
 
 }
 
@@ -361,16 +379,19 @@ start() {
 	config_load pcap_dnsproxy
 	config_foreach pcap_header
 
-	if [ $CONF_FIL_EN == 1 ]
+	if [ $ENABLE == 1 -a $CONF_FIL_EN == 1 ]
 		then
-		service_start $PROGRAM -c $CONF_DIR_USER 
-		[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy NOT Running. "
+		service_start $PROGRAM -c $CONF_DIR_USER
+		[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stopped. "
 		else if [ $ENABLE == 1 -a ! $PCAP_CAP  ] 
-			then {
-				# echo "GEN_REQ_SET:$GEN_REQ_SET LOCAL_REQ_SET:$LOCAL_REQ_SET"
-				# echo "SWI_SET:$SWI_SET PROXY_SET:$PROXY_SET ADV_SET:$ADV_SET"
-				
+			then {		
 				config_foreach general_set
+				
+				[ $GEN_REQ_SET == 0 ] && {
+						echo "dns_protocol: $dns_protocol"
+						sed -i -e "/Protocol = req_Protocol/c Protocol = IPv4 + UDP" $TMP_FIL
+				}
+				
 				[ $GEN_REQ_SET == 1 ] && config_foreach general_req 
 				[ $LOCAL_REQ_SET == 1 ] && config_foreach local_req 
 				[ $SWI_SET == 1 ] && config_foreach adv_switches 
@@ -379,16 +400,18 @@ start() {
 				
 				echo "Config Loading finished. "
 				echo 'Pcap_DNSProxy Starting...'
-				service_start $PROGRAM -c $CONF_DIR 
-				[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy NOT Running. "
+				service_start $PROGRAM -c $CONF_DIR
+				[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stopped. "
 				}
 			else if [ $ENABLE == 1 -a $PCAP_CAP == 1 ]
 					then
 						config_foreach dispcap_capture
 						echo 'Pcap_DNSProxy Pcap Capture Disabled. Limited.'
-						service_start $PROGRAM -c $CONF_DIR 
-						[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy NOT Running. "
-					else echo 'Pcap_DNSProxy Pcap Disabled.'
+						service_start $PROGRAM -c $CONF_DIR
+						[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stopped. "
+					else 
+					stop
+					echo 'Pcap_DNSProxy Pcap Disabled.'
 			fi
 		fi
 	fi
@@ -397,12 +420,11 @@ start() {
 
 stop() {
 	service_stop $PROGRAM
-	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 0 ] && echo "Pcap_DNSProxy Stoped. " || echo "Pcap_DNSProxy NOT Stoped. "
+	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Still Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stopped. "
 }
 
 restart() {
 	stop
-#	killall $PROGRAM
 	sleep 3
 	echo ''
 	start
@@ -411,7 +433,7 @@ restart() {
 
 status() {
 
-	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy is running, PID is $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy is NOT running"
+	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stoped. "
 
 }
 

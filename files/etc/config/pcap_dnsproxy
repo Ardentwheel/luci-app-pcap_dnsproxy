@@ -1,0 +1,5 @@
+
+config base
+	option enabled '1'
+	option conf_fil '0'
+
