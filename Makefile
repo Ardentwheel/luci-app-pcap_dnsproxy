@@ -15,6 +15,7 @@ define Package/luci-app-pcap_dnsproxy
 	SUBMENU:=3. Applications
 	TITLE:=LuCI for pcap-dnsproxy
 	PKGARCH:=all
+	DEPENDS:=+libpthread +libsodium
 endef
 
 define Package/luci-app-pcap_dnsproxy/description
