@@ -2,11 +2,13 @@
 
 START=95
 
-EXTRA_COMMANDS="status libver"
+EXTRA_COMMANDS="status atosys rmfsys help"
 EXTRA_HELP=<<EOF
 	Available Commands: 
 		status
-		libver
+		atosys
+		rmfsys
+		help
 EOF
 
 PROGRAM="/usr/sbin/Pcap_DNSProxy"
@@ -432,14 +434,93 @@ restart() {
 }
 
 status() {
+	local enabled=`uci get pcap_dnsproxy.@base[0].enabled`
+	local listen_protocol=`uci get pcap_dnsproxy.@base[0].listen_protocol 2>/dev/null`
+	local opera_mode=`uci get pcap_dnsproxy.@base[0].opera_mode 2>/dev/null`
+	local server_port=`uci get pcap_dnsproxy.@base[0].server_port 2>/dev/null`
+	local gen_ipv4_req=`uci get pcap_dnsproxy.@base[0].gen_ipv4_req 2>/dev/null`
+	local gen_ipv4_lo_req=`uci get pcap_dnsproxy.@base[0].gen_ipv4_lo_req 2>/dev/null`
+	local TCP_fast=`uci get pcap_dnsproxy.@base[0].TCP_fast 2>/dev/null`
+	local alt_mul_req=`uci get pcap_dnsproxy.@base[0].alt_mul_req 2>/dev/null`
+	local mul_req=`uci get pcap_dnsproxy.@base[0].mul_req 2>/dev/null`
+	local compress=`uci get pcap_dnsproxy.@base[0].compress 2>/dev/null`
+	local proxy=`uci get pcap_dnsproxy.@base[0].proxy 2>/dev/null`
+	local socks_proxy=`uci get pcap_dnsproxy.@base[0].socks_proxy 2>/dev/null`
+	local http_proxy=`uci get pcap_dnsproxy.@base[0].http_proxy 2>/dev/null`
+	local part_mod=`uci get pcap_dnsproxy.@base[0].part_mod 2>/dev/null`
+	local local_routing=`uci get pcap_dnsproxy.@base[0].local_routing 2>/dev/null`
 
-	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stoped. "
+	echo ''
+	echo 'Pcap_DNSProxy Version: '
+	$PROGRAM --lib-version
+	echo ''
+	[ $enabled == 1 ] && echo -e "	Autostarts: 			\033[40;32;1m Enable \033[0m" || echo -e "	Autostarts: 			\033[40;31;1m Disable \033[0m"
+	[ $TCP_fast -a $TCP_fast == 1 ] && echo -e "	TCP Fast Open: 			\033[40;32;1m Enable \033[0m" || echo -e "	TCP Fast Open: 			\033[40;31;1m Disable \033[0m"
+	[ $alt_mul_req -a $alt_mul_req == 1 ] && echo -e "	Alternate Multi Request: 	\033[40;32;1m Enable \033[0m" || echo -e "	Alternate Multi Request: 	\033[40;31;1m Disable \033[0m"
+	if [ $part_mod == H ] 
+	then
+		echo -e "	Partition Mod: 			\033[40;33;1m Local Hosts \033[0m"
+	else if [ $part_mod == M ]
+		then 
+		[ $local_routing -a $local_routing == 1 ] && echo -e "	Partition Mod: 			\033[40;33;1m Local Main + Local Routing \033[0m" || echo -e "	Partition Mod: 			\033[40;33;1m Local Main \033[0m"
+		else echo -e "	Partition Mod: 			\033[40;31;1m Disable \033[0m"
+		fi
+	fi
+	if [ $proxy -a $proxy == 1 ] 
+	then
+		[ $socks_proxy -a $http_proxy ] && echo -e "	Proxy:				\033[40;33;1m Socks + Http \033[0m" || echo -e "	Proxy:				\033[40;33;1m Http \033[0m"
+	else echo -e "	Proxy:				\033[40;31;1m Disable \033[0m"
+	fi
+	echo -e "	Alternate Multi Request:	\033[40;34;1m $mul_req \033[0m"
+	echo -e "	Compression Pointer Mutation : 	\033[40;34;1m $compress \033[0m"
+	echo ''
+	echo "	Listen Protocol:		 $listen_protocol"
+	echo "	Operation Mode:			 $opera_mode"
+	echo "	IPv4 DNS Address:		 $gen_ipv4_req"
+	echo "	IPv4 Local DNS Address:		 $gen_ipv4_lo_req"
+	echo ''
 
+	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo -e "	Pcap_DNSProxy Running. PID: 	\033[40;34;1m $(pidof ${PROGRAM##*/}) \033[0m" || echo "	Pcap_DNSProxy Stoped. "
+	echo ''
 }
 
-libver() {
+atosys() {
+	local server_port=`uci get pcap_dnsproxy.@base[0].server_port 2>/dev/null`
 
+	sed -i -e "/server=127.0.0.1/d" \
+	-e "/no-resolv/d" /etc/dnsmasq.conf
+	echo "server=127.0.0.1#$server_port" >> /etc/dnsmasq.conf
+	echo "no-resolv" >> /etc/dnsmasq.conf
+
+	/etc/init.d/dnsmasq restart
+}
+
+rmfsys() {
+	sed -i -e "/server=127.0.0.1/d" \
+	-e "/no-resolv/d" /etc/dnsmasq.conf
+
+	/etc/init.d/dnsmasq restart
+	exit 0
+}
+
+help() {
+	echo ''
+	echo 'Pcap_DNSProxy Version: '
 	$PROGRAM --lib-version
 
+	echo ''
+	echo -e 'Available Commands:'
+	echo -e '	\033[40;33;1m status \033[0m	Checking Program status.'
+	echo -e '	\033[40;33;1m atosys \033[0m	Apply Pcap_DNSProxy to System Dnsmasq.'
+	echo -e '	\033[40;33;1m rmfsys \033[0m	Remove Pcap_DNSProxy from System Dnsmasq.'
+	echo -e '	\033[40;33;1m help \033[0m		This help. '
+	echo ''
 }
 
+	while [ -n "$1" ]; do
+	case $1 in
+		help) help;shift 1;;
+		h) help;shift 1;;
+		-h) help;shift 1;;
+	esac
+	done

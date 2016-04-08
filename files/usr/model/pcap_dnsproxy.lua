@@ -13,7 +13,7 @@ else
 end
 
 m = Map("pcap_dnsproxy", translate("Pcap_DnsProxy"),
-	translate("A fast secure tunnel proxy that help you get through firewalls on your router") .. " - " .. state_msg)
+	translate("A DNS Server To Avoid Contaminated Result. ") .. " - " .. state_msg)
 
 s = m:section(TypedSection, "base", "")
 s.anonymous = true
@@ -382,6 +382,20 @@ http_protocol:depends ("http_proxy", "1")
 
 -- Advanced Settings
 ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    
+
+button_applied = s: taboption ("advanced", Button, "_button_atosys", "Apply to System") 
+button_applied.inputtitle = translate ( "Apply to System") 
+button_applied.inputstyle = "apply" 
+function button_applied.write (self, section) 
+luci.sys.call ( "/etc/init.d/pcap_dnsproxy.sh atosys") 
+end
+
+button_disabled = s: taboption ("advanced", Button, "_button_rmfsys", "Disabled Apply to System") 
+button_disabled.inputtitle = translate ( "Disabled Apply to System") 
+button_disabled.inputstyle = "apply" 
+function button_disabled.write (self, section) 
+luci.sys.call ( "/etc/init.d/pcap_dnsproxy.sh rmfsys") 
+end 
 
 pcap_cap = s:taboption("advanced", Flag, "pcap_cap", translate("Disable cap Capture"))
 pcap_cap.default = "0"

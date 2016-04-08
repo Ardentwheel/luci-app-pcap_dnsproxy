@@ -19,7 +19,7 @@ define Package/luci-app-pcap_dnsproxy
 endef
 
 define Package/luci-app-pcap_dnsproxy/description
-	LuCI for pcap-dnsproxy. 
+	LuCI for Pcap-DNSProxy. Pcap-DNSProxy, A DNS Server to avoid contaminated result.
 endef
 
 define Build/Prepare
@@ -41,8 +41,8 @@ endef
 define Package/luci-app-pcap_dnsproxy/postinst
 #!/bin/sh
 	/etc/init.d/pcap_dnsproxy.sh enable
-	/etc/init.d/pcap-dnsproxy disable
 	[ -e /etc/init.d/pcap-dnsproxy ] && /etc/init.d/pcap-dnsproxy disable
+	/etc/init.d/pcap_dnsproxy.sh help
 exit 0
 endef
 
