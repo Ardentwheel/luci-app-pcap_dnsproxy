@@ -383,14 +383,16 @@ http_protocol:depends ("http_proxy", "1")
 -- Advanced Settings
 ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    
 
-button_applied = s: taboption ("advanced", Button, "_button_atosys", "Apply to System") 
+button_applied = s: taboption ("advanced", Button, "_button_atosys", "Apply to System")
+button_applied:depends ("adv_set", "1")
 button_applied.inputtitle = translate ( "Apply to System") 
 button_applied.inputstyle = "apply" 
 function button_applied.write (self, section) 
 luci.sys.call ( "/etc/init.d/pcap_dnsproxy.sh atosys") 
 end
 
-button_disabled = s: taboption ("advanced", Button, "_button_rmfsys", "Disabled Apply to System") 
+button_disabled = s: taboption ("advanced", Button, "_button_rmfsys", "Disabled Apply to System")
+button_disabled:depends ("adv_set", "1")
 button_disabled.inputtitle = translate ( "Disabled Apply to System") 
 button_disabled.inputstyle = "apply" 
 function button_disabled.write (self, section) 

@@ -12,6 +12,7 @@ EXTRA_HELP=<<EOF
 EOF
 
 PROGRAM="/usr/sbin/Pcap_DNSProxy"
+PRG_DNSMASQ="/usr/sbin/dnsmasq"
 O_CONF_FIL="/etc/pcap_dnsproxy/config"
 CONF_FIL="/etc/pcap_dnsproxy/Config.conf"
 
@@ -77,7 +78,7 @@ general_set() {
 		-e "/IPv6 Local DNS Address = ipv6/c IPv6 Local DNS Address = $gen_ipv6_lo_req" \
 		-e "/IPv6 Local Alternate DNS Address = ipv6/c IPv6 Local Alternate DNS Address = $alt_ipv6_lo_req" $TMP_FIL
 
-	GEN_REQ_SET=$gen_req_set
+	[ $gen_req_set ] && GEN_REQ_SET=$gen_req_set || GEN_REQ_SET=0
 	LOCAL_REQ_SET=$local_req_set
 	SWI_SET=$swi_set
 	PROXY_SET=$proxy_set
@@ -100,14 +101,14 @@ general_req() {
 	config_get cache_par $1 cache_par
 	config_get def_ttl $1 def_ttl
 
-	echo "Loading General DNS Request Settings... "
+	echo -e "Loading General DNS Request Settings... "
 	sed -i -e "/Protocol = req_Protocol/c Protocol = $dns_protocol" \
 		-e "/Direct Request/c Direct Request = $dir_req" \
 		-e "/Cache Type/c Cache Type = $cache_type" \
 		-e "/Cache Parameter/c Cache Parameter = $cache_par" \
 		-e "/Default TTL/c Default TTL = $def_ttl" $TMP_FIL
 
-	echo '	General Settings loaded. '
+	echo -e '	General DNS Request Settings	\033[40;32;1m loaded \033[0m '
 	
 }
 
@@ -124,7 +125,7 @@ local_req() {
 	config_get hosts_fil $1 hosts_fil
 	config_get local_routing $1 local_routing
 
-	echo "Loading Local DNS Request Settings... "
+	echo -e "Loading Local DNS Request Settings... "
 	sed -i -e "/Local Protocol/c Local Protocol = $local_protocol" $TMP_FIL
 
 	if [ $req_partition ]
@@ -133,22 +134,22 @@ local_req() {
 		then
 			sed -i -e "/Local Hosts/c Local Hosts = 1" \
 			-e "/Hosts File Name/c Hosts File Name = $hosts_fil" $TMP_FIL
-			echo "	Local Hosts Enabled."
+			echo -e "	Local Hosts			\033[40;32;1m Enabled \033[0m "
 		else if [ $part_mod == M -a $local_routing == 1 ] 
 			then
 				sed -i -e "/Local Main/c Local Main = 1" \
 				-e "/Local Routing/c Local Routing = 1" $TMP_FIL
-				echo "	Local Main Enabled."
-				echo "	Local Routing Enabled. "
+				echo -e "	Local Main		\033[40;32;1m Enabled \033[0m "
+				echo -e "	Local Routing		\033[40;32;1m Enabled \033[0m "
 			else if [ $part_mod == M -a $local_routing = 0 ] 
 					then 
 						sed -i -e "/Local Main/c Local Main = 1" \
 						-e "/Local Routing/c Local Routing = 0" $TMP_FIL
-						echo "	Local Main Enabled. Local Routing Disable. "
+						echo "	Local Main Enabled. Local Routing		\033[40;32;1m Disable \033[0m "
 				fi 
 			fi
 		fi
-	else echo '	Request Partition(Local Prefer) Disable. '
+	else echo -e '	Request Partition(Local Prefer)		\033[40;32;1m Disable \033[0m '
 	fi
 	
 }
@@ -164,12 +165,12 @@ adv_switches() {
 	config_get mul_req $1 mul_req
 	config_get compress $1 compress
 
-	echo "Loading Advanced Switches Settings... "
+	echo -e "Loading Advanced Switches Settings... "
 	sed -i -e "/TCP Fast Open/c TCP Fast Open = $TCP_fast" \
 		-e "/Alternate Multi Request/c Alternate Multi Request = $alt_mul_req" \
 		-e "/Multi Request Times/c Multi Request Times = $mul_req" \
 		-e "/Compression Pointer Mutation/c Compression Pointer Mutation = $compress" $TMP_FIL
-	echo '	Advanced Switches loaded. '
+	echo -e '	Advanced Switches		\033[40;32;1m loaded \033[0m '
 	
 }
 
@@ -242,9 +243,9 @@ proxy() {
 				-e "/SOCKS Username/c SOCKS Username = $socks_user" \
 				-e "/SOCKS Password/c SOCKS Password = $socks_pwd" $TMP_FIL
 
-				echo '	Socks Proxy Enabled. '
+				echo -e '	Socks Proxy			\033[40;32;1m Enabled \033[0m '
 				}
-			else echo '	Socks Proxy Disabled. '
+			else echo -e '	Socks Proxy			\033[40;31;1m Disabled \033[0m '
 			fi
 		
 #			http_proxy
@@ -260,12 +261,12 @@ proxy() {
 				[ $http_permisson ] && sed -i \
 				-e "/SHTTP Proxy Authorization/c HTTP Proxy Authorization = $http_user:$http_pwd" $TMP_FIL
 			
-				echo '	HTTP Proxy Enabled. '
+				echo -e '	HTTP Proxy		\033[40;32;1m Enabled \033[0m '
 				}
-			else echo '	HTTP Proxy Disabled. '
+			else echo -e '	HTTP Proxy			\033[40;31;1m Disabled \033[0m '
 			fi
 		}
-		else echo '	Proxy Disabled. '
+		else echo -e '	Proxy			\033[40;32;1m Enabled \033[0m '
 	fi
 
 }
@@ -327,9 +328,9 @@ advanced_set() {
 			-e "/DNSCurve IPv4 Alternate DNS Address/c DNSCurve IPv4 Alternate DNS Address = $dnscurve_ipv4_alt" \
 			-e "/DNSCurve IPv6 DNS Address/c DNSCurve IPv6 DNS Address = $dnscurve_ipv6" \
 			-e "/Alternate DNS Address/c Alternate DNS Address = $dnscurve_ipv6_alt" $TMP_FIL
-		echo '	DNSCurve Enable. '
+		echo -e '	DNSCurve			\033[40;32;1m Enabled \033[0m '
 		}
-	else echo '	DNSCurve Disable. '
+	else echo -e '	DNSCurve			\033[40;31;1m Disabled \033[0m '
 	fi
 
 }
@@ -343,7 +344,7 @@ dispcap_capture() {
 	echo "Loading Dispcap Capture Settings... "
 	sed -i -e "/Pcap Capture/c Pcap Capture = $pcap_cap" \
 		-e "/Hosts File Name/c Hosts File Name = $hosts_fil" $TMP_FIL
-	echo '	Dispcap Capture Loaded. '
+	echo -e '	Dispcap Capture \033[40;32;1m loaded \033[0m '
 
 }
 
@@ -351,31 +352,44 @@ pcap_header() {
 	local enabled
 	local pcap_cap
 	local conf_fil
+	local server_port
 
 	config_get enabled $1 enabled
 	config_get pcap_cap $1 pcap_cap
 	config_get conf_fil $1 conf_fil
+	config_get server_port $1 server_port
 
 	ENABLE=$enabled
 	PCAP_CAP=$pcap_cap
 	CONF_FIL_EN=$conf_fil
+	PORT=$server_port
+}
 
+switches () {
+	if [ $ENABLE -a $ENABLE == 1 ]
+	then
+	/etc/init.d/pcap_dnsproxy.sh enable
+	else if [ $ENABLE -a $ENABLE == 0 ]
+		then
+		/etc/init.d/pcap_dnsproxy.sh disable
+		fi
+	fi
 }
 
 start() {
 	mkdir -p $TMP_DIR
 	cp  $O_CONF_FIL $TMP_FIL
-	echo 'Checking Configuration... '
+	# echo 'Checking Configuration... '
 
 	if [ -e "$CONF_FIL" ] 
 	then
-		echo "Config File Link exist. Rebuilting... "
+		# echo "Config File Link exist. Rebuilting... "
 		rm -f $CONF_FIL
 		ln -s $TMP_FIL $CONF_FIL
-		echo "Config File Link Rebuilted. "
+		# echo -e "Config File Link \033[40;32;1m Rebuilted \033[0m "
 	else 
 		ln -s $TMP_FIL $CONF_FIL
-		echo "Config File Link Rebuilted. "
+		# echo -e "Config File Link \033[40;32;1m Rebuilted \033[0m "
 	fi
 
 	config_load pcap_dnsproxy
@@ -384,45 +398,47 @@ start() {
 	if [ $ENABLE == 1 -a $CONF_FIL_EN == 1 ]
 		then
 		service_start $PROGRAM -c $CONF_DIR_USER
-		[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stopped. "
+		[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo -e "	Pcap_DNSProxy			\033[40;32;1m Running \033[0m Port: \033[40;34;1m $PORT \033[0m	PID: \033[40;34;1m $(pidof ${PROGRAM##*/}) \033[0m" || echo -e "	Pcap_DNSProxy			\033[40;31;1m Stoped \033[0m"
+		[ $(ps|grep ${PRG_DNSMASQ}|grep -v grep|wc -l) -ge 1 ] && echo -e "	DNSMasq				\033[40;32;1m Running \033[0m Port: \033[40;34;1m 53 \033[0m	PID: \033[40;34;1m $(pidof ${PRG_DNSMASQ##*/}) \033[0m" || echo -e '	DNSMasq			\033[40;31;1m Stopped \033[0m ' 
 		else if [ $ENABLE == 1 -a ! $PCAP_CAP  ] 
 			then {		
 				config_foreach general_set
 				
-				[ $GEN_REQ_SET == 0 ] && {
-						echo "dns_protocol: $dns_protocol"
-						sed -i -e "/Protocol = req_Protocol/c Protocol = IPv4 + UDP" $TMP_FIL
-				}
-				
+				[ $GEN_REQ_SET == 0 ] && sed -i -e "/Protocol = req_Protocol/c Protocol = IPv4 + UDP" $TMP_FIL
 				[ $GEN_REQ_SET == 1 ] && config_foreach general_req 
 				[ $LOCAL_REQ_SET == 1 ] && config_foreach local_req 
 				[ $SWI_SET == 1 ] && config_foreach adv_switches 
 				[ $PROXY_SET == 1 ] && config_foreach proxy 
 				[ $ADV_SET == 1 ] && config_foreach advanced_set 
 				
-				echo "Config Loading finished. "
+				echo 'Config Loading finished. '
+				echo '' 
 				echo 'Pcap_DNSProxy Starting...'
 				service_start $PROGRAM -c $CONF_DIR
-				[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stopped. "
+				[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo -e "	Pcap_DNSProxy			\033[40;32;1m Running \033[0m Port: \033[40;34;1m $PORT \033[0m	PID: \033[40;34;1m $(pidof ${PROGRAM##*/}) \033[0m" || echo -e "	Pcap_DNSProxy			\033[40;31;1m Stoped \033[0m"
+				[ $(ps|grep ${PRG_DNSMASQ}|grep -v grep|wc -l) -ge 1 ] && echo -e "	DNSMasq				\033[40;32;1m Running \033[0m Port: \033[40;34;1m 53 \033[0m	PID: \033[40;34;1m $(pidof ${PRG_DNSMASQ##*/}) \033[0m" || echo -e '	DNSMasq			\033[40;31;1m Stopped \033[0m ' 
 				}
 			else if [ $ENABLE == 1 -a $PCAP_CAP == 1 ]
 					then
 						config_foreach dispcap_capture
-						echo 'Pcap_DNSProxy Pcap Capture Disabled. Limited.'
+						echo 'Pcap_DNSProxy Pcap Capture \033[40;31;1m Disabled \033[0m . Limited.'
 						service_start $PROGRAM -c $CONF_DIR
-						[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stopped. "
-					else 
-					stop
-					echo 'Pcap_DNSProxy Pcap Disabled.'
+						[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo -e "	Pcap_DNSProxy			\033[40;32;1m Running \033[0m Port: \033[40;34;1m $server_port \033[0m	PID: \033[40;34;1m $(pidof ${PROGRAM##*/}) \033[0m" || echo -e "	Pcap_DNSProxy			\033[40;31;1m Stoped \033[0m"
+						[ $(ps|grep ${PRG_DNSMASQ}|grep -v grep|wc -l) -ge 1 ] && echo -e "	DNSMasq				\033[40;32;1m Running \033[0m Port: \033[40;34;1m 53 \033[0m	PID: \033[40;34;1m $(pidof ${PRG_DNSMASQ##*/}) \033[0m" || echo -e '	DNSMasq				\033[40;31;1m Stopped \033[0m ' 
+					else
+					echo -e 'Pcap_DNSProxy Pcap \033[40;31;1m Disabled \033[0m '
 			fi
 		fi
 	fi
+
+	switches
 	echo ' '
 }
 
 stop() {
+	echo ''
 	service_stop $PROGRAM
-	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo "Pcap_DNSProxy Still Running. PID: $(pidof ${PROGRAM##*/})" || echo "Pcap_DNSProxy Stopped. "
+	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo -e "	Pcap_DNSProxy still					\033[40;32;1m Running \033[0m	PID: \033[40;34;1m $(pidof ${PROGRAM##*/}) \033[0m " || echo -e "Pcap_DNSProxy				\033[40;31;1m Stopped \033[0m"
 }
 
 restart() {
@@ -457,20 +473,31 @@ status() {
 	[ $enabled == 1 ] && echo -e "	Autostarts: 			\033[40;32;1m Enable \033[0m" || echo -e "	Autostarts: 			\033[40;31;1m Disable \033[0m"
 	[ $TCP_fast -a $TCP_fast == 1 ] && echo -e "	TCP Fast Open: 			\033[40;32;1m Enable \033[0m" || echo -e "	TCP Fast Open: 			\033[40;31;1m Disable \033[0m"
 	[ $alt_mul_req -a $alt_mul_req == 1 ] && echo -e "	Alternate Multi Request: 	\033[40;32;1m Enable \033[0m" || echo -e "	Alternate Multi Request: 	\033[40;31;1m Disable \033[0m"
-	if [ $part_mod == H ] 
-	then
-		echo -e "	Partition Mod: 			\033[40;33;1m Local Hosts \033[0m"
-	else if [ $part_mod == M ]
-		then 
+
+	if [ $part_mod -a $part_mod == H ] 
+	then echo -e "	Partition Mod: 			\033[40;33;1m Local Hosts \033[0m"
+	else if [ $part_mod -a $part_mod == M ]
+		then
 		[ $local_routing -a $local_routing == 1 ] && echo -e "	Partition Mod: 			\033[40;33;1m Local Main + Local Routing \033[0m" || echo -e "	Partition Mod: 			\033[40;33;1m Local Main \033[0m"
 		else echo -e "	Partition Mod: 			\033[40;31;1m Disable \033[0m"
 		fi
 	fi
+
 	if [ $proxy -a $proxy == 1 ] 
 	then
-		[ $socks_proxy -a $http_proxy ] && echo -e "	Proxy:				\033[40;33;1m Socks + Http \033[0m" || echo -e "	Proxy:				\033[40;33;1m Http \033[0m"
+		if [ $socks_proxy -a $http_proxy ] 2>/dev/null
+		then echo -e "	Proxy:				\033[40;33;1m Socks + Http \033[0m"
+		else if [ $http_proxy -a $http_proxy == 1 ]
+			then echo -e "	Proxy:				\033[40;33;1m Http \033[0m"
+			else if [ $socks_proxy -a $socks_proxy == 1 ]
+				then echo -e "	Proxy:				\033[40;33;1m Socks \033[0m"
+				else echo -e "	Proxy:				\033[40;31;1m Disable \033[0m"
+				fi
+			fi
+		fi
 	else echo -e "	Proxy:				\033[40;31;1m Disable \033[0m"
 	fi
+
 	echo -e "	Alternate Multi Request:	\033[40;34;1m $mul_req \033[0m"
 	echo -e "	Compression Pointer Mutation : 	\033[40;34;1m $compress \033[0m"
 	echo ''
@@ -480,7 +507,9 @@ status() {
 	echo "	IPv4 Local DNS Address:		 $gen_ipv4_lo_req"
 	echo ''
 
-	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo -e "	Pcap_DNSProxy Running. PID: 	\033[40;34;1m $(pidof ${PROGRAM##*/}) \033[0m" || echo "	Pcap_DNSProxy Stoped. "
+	[ $(ps|grep ${PROGRAM}|grep -v grep|wc -l) -ge 1 ] && echo -e "	Pcap_DNSProxy			\033[40;32;1m Running \033[0m Port: \033[40;34;1m $server_port \033[0m	PID: \033[40;34;1m $(pidof ${PROGRAM##*/}) \033[0m" || echo -e "	Pcap_DNSProxy			\033[40;31;1m Stoped \033[0m"
+	[ $(ps|grep ${PRG_DNSMASQ}|grep -v grep|wc -l) -ge 1 ] && echo -e "	DNSMasq				\033[40;32;1m Running \033[0m Port: \033[40;34;1m 53 \033[0m	PID: \033[40;34;1m $(pidof ${PRG_DNSMASQ##*/}) \033[0m" || echo -e '	DNSMasq			\033[40;31;1m Stopped!!! \033[0m ' 
+	#echo " $(netstat -nlp | grep pidof ${PROGRAM##*/}) "
 	echo ''
 }
 
@@ -517,10 +546,10 @@ help() {
 	echo ''
 }
 
-	while [ -n "$1" ]; do
+while [ -n "$1" ]; do
 	case $1 in
 		help) help;shift 1;;
 		h) help;shift 1;;
 		-h) help;shift 1;;
 	esac
-	done
+done

@@ -39,7 +39,7 @@
 .*\bqiyipic\.com
 .*\bsinaapp\.com
 .*\bsohu\.com
-.*\bstaticfile.org
+.*\bstaticfile\.org
 .*\btaobao\.com
 .*\btmall\.com
 .*\bupai\.com
