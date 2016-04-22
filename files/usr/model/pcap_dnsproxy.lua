@@ -49,15 +49,13 @@ server_port.default = "1053"
 server_port.datatype = "port"
 
 listen_protocol = s:taboption("general", ListValue, "listen_protocol", translate("Listen Protocol"))
-listen_protocol:value("IPv4 + IPv6 + TCP + UDP")
-listen_protocol:value("IPv4 + IPv6 + UDP")
-listen_protocol:value("IPv4 + IPv6 + TCP")
-listen_protocol:value("IPv4 + TCP + UDP")
-listen_protocol:value("IPv6 + TCP + UDP")
 listen_protocol:value("IPv4 + UDP")
-listen_protocol:value("IPv4 + TCP")
+listen_protocol:value("IPv4 + TCP + UDP")
 listen_protocol:value("IPv6 + UDP")
-listen_protocol:value("IPv6 + TCP")
+listen_protocol:value("IPv6 + TCP + UDP")
+listen_protocol:value("IPv4 + IPv6 + UDP")
+listen_protocol:value("IPv4 + IPv6 + TCP + UDP")
+listen_protocol.default = "IPv4 + IPv6 + TCP + UDP"
 
 read_timeout = s:taboption("general", Value, "read_timeout", translate("Pcap Reading Timeout"))
 read_timeout.default = "200"
@@ -138,23 +136,25 @@ conf_fil.rmempty = false
 
 dns_protocol = s:taboption("gen_dns", ListValue, "dns_protocol", translate("DNS Protocol"))
 dns_protocol:value("IPv4 + UDP")
-dns_protocol:value("IPv4 + TCP")
+dns_protocol:value("IPv4 + TCP + UDP")
 dns_protocol:value("IPv6 + UDP")
-dns_protocol:value("IPv6 + TCP")
+dns_protocol:value("IPv6 + TCP + UDP")
 dns_protocol:value("IPv4 + IPv6 + UDP")
-dns_protocol:value("IPv4 + IPv6 + TCP")
+dns_protocol:value("IPv4 + IPv6 + TCP + UDP")
+dns_protocol.default = "IPv4 + TCP + UDP"
 dns_protocol:depends("gen_req_set", "1")
 
-dir_req = s:taboption("gen_dns", ListValue, "dir_req", translate("Direct Request"))
-dir_req:value("")
+dir_req = s:taboption("gen_dns", ListValue, "dir_req", translate("Direct Request"), translate("Bypass VPN"))
+dir_req:value("0", "Disable")
 dir_req:value("IPv4")
 dir_req:value("IPv6")
-dir_req:value("IPv4 + IPv6")
+dir_req:value("IPv4 + IPv6") 
+dir_req.default = "0"
 dir_req:depends("gen_req_set", "1")
 
 cache_type = s:taboption("gen_dns", ListValue, "cache_type", translate("Cache Type"))
-cache_type:value("queue", translate"Queue")
-cache_type:value("timer", translate"Timer")
+cache_type:value("Queue", translate"Queue")
+cache_type:value("Timer", translate"Timer")
 cache_type:depends("gen_req_set", "1")
 
 cache_par = s:taboption("gen_dns", Value, "cache_par", translate("Cache Parameter")
@@ -180,11 +180,12 @@ def_ttl:depends("gen_req_set", "1")
 
 local_protocol = s:taboption("local_req", ListValue, "local_protocol", translate("Local DNS Protocol"))
 local_protocol:value("IPv4 + UDP")
-local_protocol:value("IPv4 + TCP")
+local_protocol:value("IPv4 + TCP + UDP")
 local_protocol:value("IPv6 + UDP")
-local_protocol:value("IPv6 + TCP")
+local_protocol:value("IPv6 + TCP + UDP")
 local_protocol:value("IPv4 + IPv6 + UDP")
-local_protocol:value("IPv4 + IPv6 + TCP")
+local_protocol:value("IPv4 + IPv6 + TCP + UDP")
+local_protocol.default = "IPv4 + UDP"
 local_protocol:depends("local_req_set", "1")
 
 req_partition = s:taboption("local_req", Flag, "req_partition", translate("Request Partition(Local Prefer)"),
@@ -225,7 +226,7 @@ alt_mul_req.default = "0"
 alt_mul_req:depends("swi_set", "1")
 
 mul_req = s:taboption("adv_switches", ListValue, "mul_req", translate("Multi Request Times"))
-mul_req:value("0")
+mul_req:value("0", "Disable")
 mul_req:value("1")
 mul_req:value("2")
 mul_req:value("3")
@@ -241,9 +242,11 @@ mul_req:depends("swi_set", "1")
 
 
 compress = s:taboption("adv_switches", ListValue, "compress", translate("Compression Pointer Mutation"))
+compress:value("0", "Disable")
 compress:value("1")
 compress:value("1 + 2")
 compress:value("1 + 2 + 3")
+compress.default = "0"
 compress:depends("swi_set", "1")
 
 
@@ -297,6 +300,7 @@ socks_ipv6:depends ("socks_version", "5")
 socks_ip = s:taboption("proxy_set", Value, "socks_ip", translate("Target Server")
 	, translate("8.8.8.8:53 or [::1]:53"))
 socks_ip:value("8.8.8.8:53")
+socks_ip:value("8.8.4.4:53")
 socks_ip.default = "8.8.8.8:53"
 socks_ip:depends ("socks_proxy", "1")
 
@@ -320,11 +324,12 @@ socks_version:depends ("socks_proxy", "1")
 
 socks_protocol = s:taboption("proxy_set", ListValue, "socks_protocol", translate("Proxy protocol"))
 socks_protocol:value("IPv4 + UDP")
-socks_protocol:value("IPv4 + TCP")
+socks_protocol:value("IPv4 + TCP + UDP")
 socks_protocol:value("IPv6 + UDP")
-socks_protocol:value("IPv6 + TCP")
+socks_protocol:value("IPv6 + TCP + UDP")
 socks_protocol:value("IPv4 + IPv6 + UDP")
-socks_protocol:value("IPv4 + IPv6 + TCP")
+socks_protocol:value("IPv4 + IPv6 + TCP + UDP")
+socks_protocol.default = "IPv4 + TCP + UDP"
 socks_protocol:depends ("socks_proxy", "1")
 
 ------------   ------------   ------------   ------------   ------------   ------------   ------------   ------------   ------------   ------------   
@@ -366,6 +371,7 @@ http_ipv6:depends ("http_proxy", "1")
 http_ip = s:taboption("proxy_set", Value, "http_ip", translate("Target Server")
 	, translate("8.8.8.8:53 or [::1]:53"))
 http_ip:value("8.8.8.8:53")
+http_ip:value("8.8.4.4:53")
 http_ip.default = "8.8.8.8:53"
 http_ip:depends ("http_proxy", "1")
 
@@ -473,26 +479,24 @@ recv_wait:depends ("adv_set", "1")
 ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    ---------    
 
 dnscurve = s:taboption("advanced", Flag, "dnscurve", translate("DNSCurve"),
-	translate("Options for advanced users"))
-dnscurve.disabled = "0"
-dnscurve.default = "0"
+	translate(""))
 dnscurve:depends ("adv_set", "1")
 
-dnscurve_crypted = s:taboption("advanced", Flag, "dnscurve_crypted", translate("Encryption"),
-	translate("Options for advanced users"))
-dnscurve_crypted:depends ("dnscurve", "1")
+encrypted = s:taboption("advanced", Flag, "encrypted", translate("Encryption"),
+	translate(""))
+encrypted:depends ("dnscurve", "1")
 
 encrypt_ol = s:taboption("advanced", Flag, "encrypt_ol", translate("Encryption Only"),
-	translate("Options for advanced users"))
-encrypt_ol:depends ("dnscurve_encryption", "1")
+	translate(""))
+encrypt_ol:depends ("dnscurve", "1")
 
 dnscurve_protocol = s:taboption("advanced", ListValue, "dnscurve_protocol", translate("DNSCurve Protocol"))
 dnscurve_protocol:value("IPv4 + UDP")
-dnscurve_protocol:value("IPv4 + TCP")
+dnscurve_protocol:value("IPv4 + TCP + UDP")
 dnscurve_protocol:value("IPv6 + UDP")
-dnscurve_protocol:value("IPv6 + TCP")
+dnscurve_protocol:value("IPv6 + TCP + UDP")
 dnscurve_protocol:value("IPv4 + IPv6 + UDP")
-dnscurve_protocol:value("IPv4 + IPv6 + TCP")
+dnscurve_protocol:value("IPv4 + IPv6 + TCP + UDP")
 dnscurve_protocol:depends("dnscurve", "1")
 
 dnscurve_ipv4 = s:taboption("advanced", Value, "dnscurve_ipv4", translate("<abbr title=\"Internet protocol Version 4\">IPv4</abbr>-Address")

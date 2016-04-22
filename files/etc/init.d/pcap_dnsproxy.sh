@@ -78,6 +78,7 @@ general_set() {
 		-e "/IPv6 Local DNS Address = ipv6/c IPv6 Local DNS Address = $gen_ipv6_lo_req" \
 		-e "/IPv6 Local Alternate DNS Address = ipv6/c IPv6 Local Alternate DNS Address = $alt_ipv6_lo_req" $TMP_FIL
 
+
 	[ $gen_req_set ] && GEN_REQ_SET=$gen_req_set || GEN_REQ_SET=0
 	LOCAL_REQ_SET=$local_req_set
 	SWI_SET=$swi_set
@@ -164,6 +165,8 @@ adv_switches() {
 	config_get alt_mul_req $1 alt_mul_req
 	config_get mul_req $1 mul_req
 	config_get compress $1 compress
+
+	[ $alt_mul_req -a $alt_mul_req == 1 ] && alt_mul_req=1 || alt_mul_req=0
 
 	echo -e "Loading Advanced Switches Settings... "
 	sed -i -e "/TCP Fast Open/c TCP Fast Open = $TCP_fast" \
@@ -282,7 +285,7 @@ advanced_set() {
 	local queue_lim_re
 	local recv_wait
 	local dnscurve
-	local dnscurve_crypted
+	local encrypted
 	local encrypt_ol
 	local dnscurve_protocol
 	local dnscurve_ipv4
@@ -300,7 +303,7 @@ advanced_set() {
 	config_get queue_lim_re $1 queue_lim_re
 	config_get recv_wait $1 recv_wait
 	config_get dnscurve $1 dnscurve
-	config_get dnscurve_crypted $1 dnscurve_crypted
+	config_get encrypted $1 encrypted
 	config_get encrypt_ol $1 encrypt_ol
 	config_get dnscurve_protocol  $1 dnscurve_protocol
 	config_get dnscurve_ipv4 $1 dnscurve_ipv4
@@ -317,17 +320,20 @@ advanced_set() {
 	sed -i -e "/Buffer Queue Limits/c Buffer Queue Limits = $queue_lim" $TMP_FIL
 	sed -i -e "/Queue Limits Reset Time/c Queue Limits Reset Time = $queue_lim_re" $TMP_FIL
 	sed -i -e "/Receive Waiting/c Receive Waiting = $recv_wait" $TMP_FIL
-	
+
+	[ $encrypted -a $encrypted == 1 ] && encrypted=1 || encrypted=0
+	[ $encrypt_ol -a $encrypt_ol == 1 ] && encrypt_ol=1 || encrypt_ol=0
+
 	if [ $dnscurve ]
 	then {
 		sed -i -e "/DNSCurve = 0/c DNSCurve = $dnscurve" \
 			-e "/DNSCurve Protocol/c DNSCurve Protocol = $dnscurve_protocol" \
-			-e "/Encryption = /c DNSCurve = $dnscurve_crypted" \
-			-e "/Encryption Only/c Encryption Only = $encrypt_ol" $TMP_FIL
+			-e "/Encryption = /c Encryption = $encrypted" \
+			-e "/Encryption Only = /c Encryption Only = $encrypt_ol" $TMP_FIL
 		sed -i -e "/DNSCurve IPv4 DNS Address/c DNSCurve IPv4 DNS Address = $dnscurve_ipv4" \
 			-e "/DNSCurve IPv4 Alternate DNS Address/c DNSCurve IPv4 Alternate DNS Address = $dnscurve_ipv4_alt" \
 			-e "/DNSCurve IPv6 DNS Address/c DNSCurve IPv6 DNS Address = $dnscurve_ipv6" \
-			-e "/Alternate DNS Address/c Alternate DNS Address = $dnscurve_ipv6_alt" $TMP_FIL
+			-e "/DNSCurve IPv6 Alternate DNS Address/c DNSCurve IPv6 Alternate DNS Address = $dnscurve_ipv6_alt" $TMP_FIL
 		echo -e '	DNSCurve			\033[40;32;1m Enabled \033[0m '
 		}
 	else echo -e '	DNSCurve			\033[40;31;1m Disabled \033[0m '
